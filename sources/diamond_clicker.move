@@ -48,12 +48,17 @@ module diamond_clicker::game {
 
     public fun initialize_game(account: &signer) {
         // move_to account with new GameStore
+        let init_game = GameStore { diamonds: 0, upgrades: vector::empty<Upgrade>(),  last_claimed_timestamp_seconds: timestamp::now_seconds()};
+        move_to(account, init_game);
     }
 
     public entry fun click(account: &signer) acquires GameStore {
         // check if GameStore does not exist - if not, initialize_game
+        let game_store = borrow_global_mut<GameStore>(account);
+        assert!(exists<GameStore>(account), E_NOT_INITIALIZED);
 
         // increment game_store.diamonds by +1
+        game_store.diamonds = game_store.diamonds + 1;
     }
 
     fun get_unclaimed_diamonds(account_address: address, current_timestamp_seconds: u64): u64 acquires GameStore {
@@ -85,6 +90,8 @@ module diamond_clicker::game {
     #[view]
     public fun get_diamonds(account_address: address): u64 acquires GameStore {
         // return game_store.diamonds + unclaimed_diamonds
+        let game_store = borrow_global<GameStore>(account_address);
+        return game_store.diamonds + get_unclaimed_diamonds(account_address,  timestamp::now_seconds())
     }
 
     #[view]
@@ -97,6 +104,8 @@ module diamond_clicker::game {
     #[view]
     public fun get_powerups(account_address: address): vector<Upgrade> acquires GameStore {
         // return game_store.upgrades
+        let game_store = borrow_global<GameStore>(account_address);
+        return game_store.upgrades
     }
 
     /*
